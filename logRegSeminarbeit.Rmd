@@ -1,0 +1,309 @@
+---
+title: "Linear Regression with R"
+author:
+- Sören Pannier
+- Sebastian Warnholz
+abstract: >
+  Based on a concrete example, we will introduce and illustrate the functions required to conduct a regression analysis in R. The dataset *airquality* contains daily air quality measurements and we will analyze how the observed ozone concentration depends on solar radiation, temperature, wind and other factors.
+fontsize: 11
+lof: false
+graphics: true
+documentclass: article
+output: 
+  pdf_document:
+    toc: true
+    latex_engine: pdflatex
+    toc_depth: 2
+    number_sections: true
+    keep_tex: true
+---
+
+```{r setup,echo=FALSE,message=FALSE,cache=FALSE,include=TRUE, warning=FALSE}
+# Its a good idea to start any rmarkdown document with a block like this one to set knit defaults, setup the bibliography, and so forth.
+library(knitr)
+
+# If you don't want to show source code, warnings and messages in a report, 
+# they can be switched of as follows:
+# knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+# As can be seen below, the local chunk options overwrite the global settings.
+
+```
+
+
+# Data Import
+
+The dataset `airquality` is part of the R package `datasets` and can be loaded into the global enviroment of your R session using the function `data`. To get an overview about the dataset you can use the `summary` and `str` functions.
+
+```{r loadData}
+# load airquality data
+data(airquality)
+
+# investigate the internal structure of the data
+str(airquality)
+
+# view summary statistics
+summary(airquality)
+```
+
+
+To get a slightly more informative description of the data, we can use the function `describe` (package: `Hmisc`).
+
+ 
+```{r introDescribe, message=FALSE}
+# load the required package
+library(Hmisc)
+# get dataset description
+describe(airquality)
+```
+
+Let's remove the rows with missing values.
+
+```{r NAomit}
+airquality <- na.omit(airquality)
+```
+
+
+Do you think that the measured data is plausible? Read the data set description which you obtain by entering `?airquality` into the R console.
+
+```{r helpAirquality, eval=FALSE}
+?airquality
+```
+
+
+# Data Preparation
+
+Since we might not be so familiar with the units *miles per hour* and *Fahrenheit*, it would be nice to convert them to the *km/h* and *Grad Celsius*. The conversions are as follows:
+
+
+\begin{eqnarray}
+v_{km/h} &=&  1.609269 \cdot v_{mph} \\
+T_{C^\circ} &=& \frac{5}{9}\left(T_F - 32 \right)
+\end{eqnarray}
+
+```{r newVariables1}
+# Creation of the new variables
+airquality$WindKMH <- airquality$Wind * 1.609269
+airquality$TempC <- (airquality$Temp - 32) * 5/9
+
+# description of the new variables
+describe(airquality[c("WindKMH", "TempC")])
+```
+
+
+Since ozone can be decomposed by exhaust emissions
+[exhaust emissions](http://de.wikipedia.org/wiki/Ozon#Vorkommen) 
+  there might be a correlation between the day of the week\footnote{serves as proxy variable for traffic density} and the measured O$_3$ concentration. Therefore, we want to add the weekday variable `wday} to our dataset. This is a two-step process: 
+
+  1. create a `date` variable from the variables `Month`, `Day` and year (= 1973)
+  2. convert `date` to day of week; please make sure that `wday` is an unordered factor and that the factor levels are set from monday to sunday.
+
+```{r newVar2}
+# step 1: use paste to concatenate the year, month and day information
+paste("1973", airquality$Month, airquality$Day, sep = "-")[1:20]
+```
+
+
+```{r newVar2contd}
+# step 1 cont'd
+# convert the concatenated string to class 'Date'
+airquality$date <- as.Date(paste(
+  "1973", 
+  airquality$Month, 
+  airquality$Day, 
+  sep = "-"
+))
+
+# step 2
+airquality$wday <- factor(
+  weekdays(airquality$date), 
+  levels = c("Montag", "Dienstag", "Mittwoch", 
+             "Donnerstag", "Freitag", "Samstag", "Sonntag"))
+```
+
+Once `airquality` contains the additional variables, check if the obtained values are plausible.
+
+```{r describeNewVar}
+# use descr and str 
+str(airquality[c("date", "wday")])
+describe(airquality[c("date", "wday")])
+```
+
+
+# Explorative Analysis 
+\label{sect:descrPlots}
+
+Before starting the modelling process (Sect. \ref{sect:modelling}), we want to plot the data to get a better understanding of the information contained in the dataset. Which plots are suited best to investigate the assumed realtionships between Ozone and the explanatory variables?
+
+```{r scatterPlot}
+# scatterplot for two continious variables
+# point color accordings weekday
+library(RColorBrewer)
+colorsToUse <- brewer.pal(7, "Accent")
+colVector <- colorsToUse[as.numeric(airquality$wday)]
+
+# plot 1
+plot(Ozone ~ Solar.R, 
+     data = airquality,
+     col = colVector,
+     pch = 16)
+legend("topleft", legend = levels(airquality$wday), col = colorsToUse, pch = 16)
+
+# plot 2
+plot(Ozone ~ WindKMH, 
+     data = airquality,
+     col = colVector[as.numeric(airquality$wday)],
+     pch = 16)
+legend("topright", legend = levels(airquality$wday), col = colorsToUse, pch = 16)
+
+# plot3
+plot(Ozone ~ TempC, 
+     data = airquality,
+     col = colVector[as.numeric(airquality$wday)],
+     pch = 16)
+legend("topleft", legend = levels(airquality$wday), col = colorsToUse, pch = 16)
+```
+
+To visualize the relationship between a categorical variable (e.g. `wday`) and a continuous metric (e.g. `Ozone`) we can use a `boxplot`.
+
+
+```{r boxplot}
+boxplot(Ozone ~ wday, data = airquality, las = 2)
+```
+
+
+# Modelling
+\label{sect:modelling}
+
+According the plots created in Sect. \ref{sect:descrPlots} we consider the variables `Solar.R`, `WindKMH` and `TempC` as relevant regressors. In addition we want to check, if `wday` is significant after controlling for `Solar.R`, `WindKMH` and `TempC`. Now, we have to fit a linear model according our hypotheses.
+
+```{r linMod1}
+# model specification
+mod1 <- formula(Ozone ~ Solar.R + TempC + WindKMH + wday)
+# OLS fit
+res1 <- lm(mod1, data = airquality)
+# summary of lm-Results
+summary(res1)
+```
+
+
+The estimates for the levels of `wday` depend on the reference level:
+
+```{r changeRefLevel}
+# change reference level
+airquality$wday <- relevel(airquality$wday, ref = "Donnerstag")
+
+# refit the model
+res1 <- lm(mod1, data = airquality)
+
+# Check lm-Results
+summary(res1)
+```
+
+
+After relevelling the factor levels, the estimate for `wday=="Donnerstag"` shows a weak significance. This means we have to judge the regressor `wday` globally (via an F-Test) considering all factor levels at once.
+
+```{r anova1}
+anova(res1)
+```
+
+
+Now, that we see that `wday` is not significant,  we remove `wday` from the model equation. What changes should we expect for $R^2$ and the adjusted $R^2$?
+
+```{r linMod2}
+mod2 <- formula(Ozone ~ Solar.R + TempC + WindKMH)
+res2 <- lm(mod2, data = airquality)
+summary(res2)
+```
+
+
+For larger datasets with more regressors it might be tedious to remove all insignificant regressors stepwise by hand. Therefore it's good to know about the `step` function that chooses a subset of relevant regressors automatically.
+
+```{r step}
+resStepped <- step(res1)
+```
+
+## Non-linear Effects
+
+Although we are using a linear model, we can think about capturing non-linear effects. We need to check, if non-linear effects could improve our model. We can think about two approaches:
+
+* formulate a model with non-linear regressors and check if they are significant
+* investigate the partial residuals of the linear effects and look for systematic deviations
+
+
+Let's try the second approach:
+
+```{r termplot}
+# check the help for termplot
+termplot(res2, partial = TRUE, rug = TRUE, smooth = panel.smooth)
+```
+
+
+As we can see in the figures, non-linear effects for \texttt{TempC} and \texttt{WindKMH} might improve the model.
+
+```{r linmod3}
+library(splines)
+mod3 <- formula(Ozone ~ Solar.R + ns(TempC, 4) + ns(WindKMH, 4))
+res3 <- lm(mod3, data = airquality)
+summary(res3)
+anova(res3)
+```
+
+The goodness-of-fit increased from $R^2_{mod2}=`r round(summary(res2)$adj.r.squared, 3)`$ to $R^2_{mod3}=`r round(summary(res3)$adj.r.squared, 3)`$. We want to test if the additionally used parameters do significantly enhance the model.
+
+```{r anovaMod2Mod3}
+anova(res2, res3)
+```
+
+Please add the interpretaion of the given output by yourself.
+
+## Distributional assumptions
+
+For correct inferential conclusions from the estimated coefficents, we have to assure that the distributional assumptions are not violated. With respect to the linear regression this means, that the residuals are normally distributed. This can be checked via a statistical test, e.g. the Shapiro-Wilk test.
+
+```{r shapiroTest}
+residualsMod3 <- resid(res3)
+shapiro.test(residualsMod3)
+```
+
+
+Another approach is to plot the residuals via a QQ-plot:
+
+```{r QQplot}
+qqnorm(residualsMod3)
+qqline(residualsMod3, col = "red")
+
+# Alternatively we can use the plot method for the lm-Objects (?plot.lm)
+plot(res3, which = 2)
+```
+
+
+We should have a look at the values of the labelled outliers in the qqplot.
+
+```{r outlier}
+# include the predictions to the dataset
+airquality <- data.frame(airquality, O3pred = predict(res3))
+datSub <- airquality[ c("30", "117", "126"), c(all.vars(mod3), "O3pred")]
+
+# print a table in the pdf-file
+kable(datSub)
+```
+
+
+Why do the fitted values (column `O3pred`) differ so much from the measured once (Column `Ozone`)? To understand this, we have another look at the estimated spline functions, e.q. `TempC`:
+
+```{r termplot2}
+termplot(res3, se = TRUE, rug = TRUE, partial = TRUE, ylim = "free", terms = 2,
+         col.res = (rownames(airquality) %in% c(30, 117, 126)) + 1,
+         pch = (rownames(airquality) %in% c(30, 117, 126)) + 1)
+```
+
+What do you see? Explain.
+
+
+# Conclusions
+
+* Regression Analysis in R is straight-forward.
+* Functions like e.g. `step` and `termplot` are very useful tools for identifying significant regressors and non-linear relationships.
+* `R Markdown` within RStudio provides an elegant way for creating reproducible reports.
+
+
