@@ -7,7 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(ggplot2)
+library(aod)
 library(corrplot)
 library(ResourceSelection)
 ```
@@ -15,12 +15,12 @@ library(ResourceSelection)
 Conduct a regression analysis and report your findings. The report should 
 contain the following
 sections:
-• data import
-• descriptive statistics and data validation
-• identification of relevant regressors
-• fitting a regression model
-• discussion of model fit, e.g. goodness of fit, significance of regressors
-• interpreting the model
+? data import
+? descriptive statistics and data validation
+? identification of relevant regressors
+? fitting a regression model
+? discussion of model fit, e.g. goodness of fit, significance of regressors
+? interpreting the model
 
 #Data import and general information
 
@@ -165,6 +165,25 @@ plot(model2)
 **Hosmer-Lemeshow Goodness of Fit**
 ```{r}
 hoslem.test(dataglm2$survived, fitted(model2))
+
+```
+**Pruefung der Adaequalitaet des Models**Chi Kwadrat
+```{r}
+qchisq(0.95,1035)
+```
+Der Wert von Chi Kwadrat Test ist groesser als 954.88 und bedeutet dass die Model adaequat ist.
+**Wald Test**
+wir testen jetzt ob faktor variablen sind signifikant fuer das Model
+
+```{r}
+#pclass
+wald.test(b=coef(model2), Sigma=vcov(model2), Terms = 2:3)
+wald.test(b=coef(model2), Sigma=vcov(model2), Terms = 4)
+wald.test(b=coef(model2), Sigma=vcov(model2), Terms = 7:8)
+
+```
+Mit der P-Wert gleich 0 wir koennen sagen dass Pclass ist signifikant, sexmale und embarked auch
+```{r}
 
 ```
 
