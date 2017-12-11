@@ -1,0 +1,173 @@
+---
+title: "Seminararbeit Nr 2"
+author:
+- Dieter Kurakov 
+- Paulina Kurowska
+- Justyna Ziemlewicz
+abstract: > 
+  In der vorliegenden Arbeit wird eine logistische Regression zu den 
+  Überlebenschancen von Passagieren der Titanic durchgeführt. Dadurch soll ein
+  erster Einstieg in das Programmieren mit R gegeben werden. Vorab werden
+  einige Fragen zu den Datentypen in R beantwortet und einige Funktionen
+  voneinander abgegrenzt und erklärt.
+fontsize: 11
+lof: TRUE
+graphics: true
+documentclass: article
+output: 
+  pdf_document:
+    toc: true
+    latex_engine: pdflatex
+    toc_depth: 2
+    number_sections: true
+    keep_tex: true
+---
+#Function I
+Die Idee ist NA rauszunehmen, leider funktioniert das Zeichnen '!=' mit NAs nicht, deswegen benutzen wir hier die Funtion is.na, die Boolean Werte als Ergebnisse gibt. Dann um die richtige Antwort zu bekommen müssen wir die durch ! die Negation formulieren....?
+```{r}
+x <- c(1, 2, 3, NA,NA, 1, 2, 3)
+dropNa<- function(x) {
+  return(x[!is.na(x)]) #if (exists("NA"))...
+}
+dropNa(x)
+all.equal(dropNa(c(1, 2, 3, NA, 1, 2, 3)), c(1, 2, 3, 1, 2, 3))
+```
+# Functions II
+## Part 1
+Beschreibung fehlt...
+```{r}
+y <- 1:100
+meanVarSdSe <- function(x){
+  mean <- mean(x)
+  var <- var(x)
+  sd <- sd(x)
+  se <- sd/(length(x))^0.5
+  result <- c(mean=mean, var=var,sd=sd,se=se)
+  return(result)
+}
+meanVarSdSe(y)
+```
+## Part 2
+Ist es erlaubt hier na.omit zu nutzen oder dropNa?
+
+```{r}
+x <- c(NA, 1:100)
+#meanVarSdSe(x)
+meanVarSdSe <- function(x, na.rm=TRUE){
+  #if (na.rm==TRUE){x<-na.omit(x)}
+  mean <- mean(x, na.rm=na.rm)
+  var <- var(x,na.rm=na.rm)
+  sd <- sd(x,na.rm=na.rm)
+  se <- sd/(length(x)-sum(is.na(x)))^0.5
+  result <- c(mean=mean, var=var,sd=sd,se=se)
+  return (result)
+}
+meanVarSdSe(x,na.rm=TRUE)
+meanVarSdSe(x)
+meanVarSdSe(c(x, NA), na.rm = TRUE)
+```
+##Part III
+dropNa drin???Korrigieren!!! rm.na
+```{r}
+meanVarSdSe <- function(x){
+  x<-dropNa(x)
+  mean <- mean(x)
+  var <- var(x)
+  sd <- sd(x)
+  se <- sd/(length(x))^0.5
+  result <- c(mean=mean, var=var,sd=sd,se=se)
+  return (result)
+}
+meanVarSdSe(x)
+meanVarSdSe(c(x, NA))
+```
+#Functions III
+
+Wir verwenden hier nur ifelse Funktion, aber mehrmals, also als False definieren wir nächste Bedingung.
+```{r}
+#"%or%" <- function (x,y) ifelse((x==TRUE)&(y==TRUE), TRUE, ifelse(x==TRUE & y==FALSE, TRUE, ifelse(x==FALSE & y==TRUE,TRUE, FALSE)))
+"%or%" <- function (x,y) ifelse(x!=y , TRUE, ifelse(x[!x]==y[!y], FALSE,ifelse(x==y, TRUE, FALSE )))
+c(TRUE, FALSE, TRUE, FALSE) %or% c(TRUE, TRUE, FALSE, FALSE)
+
+```
+PART II
+#Scoping  I
+f():Funktion f multipliziert immer x und y, also was früher als x und y in Global Environment definiert wurde, wenn keine x und y definiert wurden , dann Fehlermeldung auftaucht.Man muss keine Argument angeben, weil die Variablen x und y sind drin als lokale Objekte der Funktion definiert, sie müssen doch in der Umgebung die Werte haben.
+g(): in Klammern definiert man neue Werte für x und y, dh. man verändert die Werte von diesen Variablen (sie werden nicht von global Environment genommen, sondern sind drin in Funktion definiert). X hat immer die Werte 2 und y ist gleich zu x, dann erfolgt die Multiplikation. In diesem Fall kann man noch die Werte von x,y anders definieren indem man in Klammern etwas schreibt.
+g(y = x) : hier definiert man den Wert nur für y, also ändert man den Wert von vorangestellte :y=x. In diesem Fall wird y=5 also was in global Environment als x gegeben wurde.
+
+```{r}
+x <- 5
+y <- 7
+f <- function() x * y #sucht nach dem Werte von X irgendwo es definiert wurde, wenn es keine X gibt dann Error,zuerst sucht es in Argument, aber diese Funktion nimmt keinen, dann sucht es in lokale Umgebung der Funkion (auch keinen), dann geht es ein Niveau oben und sucht in globaler Umgebung
+g <- function(x = 2, y = x) x * y
+g() # call 2 :  
+f() # call 1 : 
+g(y = x) # call 3
+```
+#Scoping II
+Funktion matrix dient eine Matrix zu bauen, als erste Position nimmt diese Funktion die Daten , hier die Zahlen von 1 bis 6, dann definiert man wieviele Spalte man will, hier 3, dann definiert man in welcher Ordnung die Daten ausgefüllt werden sollen, wenn TRUE beim byrow : sind die Zahlen in Zeilen in aufsteigende Reihenfolge gezeigt. Mit dem t(t) transponiert man die Matrix t (Transpose).
+```{r}
+t <- matrix(1:6, ncol = 3, byrow = TRUE)
+t
+t(t)
+
+```
+#Scoping III
+es wird eine Funktion mit der Bezeichnung 't' definiert, die eine Matrix ausgeben soll. Die Funktionszuweisung erfolgt über den Pfeil zum Vektor t , wobei die Funktion durch den Funktionsbefehl festgelegt wird. die Argumente der Funktion sind ... , was bedeutet das beliebig viele Werte  in die FUnktion gegeben werde koennen, ohne sie explizi innerhalb der Arguemnte zu definieren . Das gleiche gilt fue die ingredients der Matrix funktion . Da t() bereits für die transpose Funktion reserviert ist wird diese mit der Matrixfunktion überschrieben. Anschließend wird ein neuer Vektor erzeugt, der eine Matrix ausgeben soll mit Werten 1:6 und 3 Spalten (2x3 Matrix) 
+```{r}
+t <- function(...) matrix(...)
+T <- t(1:6, ncol = 3, byrow = TRUE)
+T
+t(T)
+matrix(matrix(1:6, ncol = 3, byrow = TRUE))
+matrix(1:6,1)
+```
+???
+```{r}
+t <- function(...) matrix(...)#??? # hier t ist als eine Funktion definiert die verhält sich wie matrix Funktion 
+t <- t(1:6, ncol = 3, byrow = TRUE) # hier es wurde t wird zum Matrix mit der Funktion t oben dfiniert gabaut wurde. 
+t(t)# erster t ist eine Funktion von R Matrix Transpose dann wird t -matrix als Argument genommen und das Ergebnis ist transponierte matrix t
+
+```
+???
+#Dynamic Lookup
+Erste Linie löscht komplett globale Umgebung, das funktioniert genauso wie rm(list = ls()). 
+```{r}
+rm(list = ls(all.names = TRUE)) # gleich zu rm(list=ls())
+f <- function(x, y = x + 1) x + y
+x <- 3
+f(2) # call 1
+x <- 5
+f(2) # call 2
+f <- function(y = x + 1) x + y
+x <- 3
+f(2) # call 3
+x <- 5
+f(2) # call 4
+f() # call 5
+```
+
+
+```{r}
+f <- function(x) {
+  f <- function(x) {
+    f <- function(x) {
+      x ^ 2
+    }
+    f(x) + 1
+  }
+  f(x) * 2
+  
+}
+f(10)
+```
+
+reshh
+```{r}
+c<-1
+c<- function(...)list(...)#ruft die f c auf danach wird es gekuckt es gibt den Wert 
+c(c,c,2)#sucht nach dem Name c (c=1), dann sucht nach der Funktion c, wenn wir Klammernn aufmchen dann r wiess dass wir eine Funktion bauen, Funktion sind die Werte hier es gibt keine untrscheidung zwischen F und W, eine Liste/Vektor von zwei Funktionen c und einem Wert =2
+d
+```
+
