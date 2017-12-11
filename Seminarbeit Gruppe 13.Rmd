@@ -1,0 +1,678 @@
+---
+title: "Seminararbeit"
+author:
+- Dieter Kurakov "4662095"
+- Paulina Kurowska "585943""
+- Justyna Ziemlewicz "562380"
+abstract: > 
+  In der vorliegenden Arbeit wird eine logistische Regression zu den 
+  Überlebenschancen von Passagieren der Titanic durchgeführt. Dadurch soll ein
+  erster Einstieg in das Programmieren mit R gegeben werden. Vorab werden
+  einige Fragen zu den Datentypen in R beantwortet und einige Funktionen
+  voneinander abgegrenzt und erklärt.
+fontsize: 11
+graphics: true
+documentclass: article
+output: 
+  pdf_document:
+    toc: true
+    latex_engine: pdflatex
+    toc_depth: 2
+    number_sections: true
+    keep_tex: true
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(aod)
+library(corrplot)
+library(ResourceSelection)
+library(Hmisc)
+library(SDMTools)
+```
+#  PART I
+
+## Atomic vector types:
+
+In der unten stehenden Tabelle sind alle einfachen atomic vector types abgebil-
+det
+
+|  Data Typ  |      Example        |                Explenation                |             
+|  --------  |  -----------------  |  --------------------------------------   |                          
+|  RAW       | "Hello" is stored   |Wird zum speichern von Bytes genutzt.      |
+|            | as 48 65 6c 6c 6f   |                                           |               
+|  Complex   | 3+ 2i               |Speichert komplexe Zahlen ab.              |          
+|  Numeric   | 12.3, 5, 999        |Speichert alle möglichen Zahlen ab.        |                                   
+|  Character | 'a', "good", "TRUE",|Speichert alles ab, was in "" oder ''steht,|                                    
+|            | "23.5", '1'         |sprich Zeichen.                            |      
+|  Integer   | 2L, 34L, 0L         |Es werden ganze Zahlen gespeichert.        |               
+|  Logical   | TRUE,FALSE          |Speichern logische Werte ab.               |                 
+|  double    | 3,33                |Speichert Gleitkommazahlen                 |      
+
+
+## Difference between Generic vs. atomic vectors:
+
+Atomic Vektoren sind der einfachste Datentyp in R. Sie sind lineare Vektoren
+eines einzigen Datentypes, bspw. a <- c(1,2,3,4). Generic Vekroten sind 
+Listen. Diese können mehr als nur einen Datentyp abbilden, sprich eine 
+Liste kann bspw. aus einem numeric, charakter und integer bestehen. 
+
+
+## A data frame is a list, but not every list is a data frame ?
+
+Sowohl Listen als auch data frames können unterschiedliche Datentypen speichern,
+wobei innerhalb eines Elements bzw. Spalte der Datentyp gleich sein sollte. 
+Data frames sind ein Spezialfall von Listen, in dennen jedes Element der Liste 
+die selbe Länge haben muss. Da diese Bedingung bei Bedarf von Listen immer 
+erfüllt werden kann, lässt sich sagen, dass ein data frame immer eine Liste ist.
+Umgekehrt gilt diese Aussage nicht, denn in Listen kann sich die Länge der 
+einzelnen Elemente unterscheiden, was die Bedingung eines data frames verletzten
+würde und somit eine Liste nur unter der Vorraussetzung von gleichlangen 
+Elementen ein data frame sein kann.
+
+# Part II
+
+## Erläuterungen einzelner Funktionen:
+
+Mit Hilfe der Funktion set.seed kann der Pseudozufahlsgenerator initialisiert 
+werden, d.h auf einen festen Startwert gesetzt werden.In unserem Fall ist es der
+Wert 1. Es ist nützlich den seed zu setzten, damit man Resulatet aus dem 
+Zufallszahlengenerator reproduzieren kann.
+
+```{r}
+# Pseudozufahlsgenerator initialisiert 
+set.seed(1) 
+```
+
+Es wird ein neuer Vektor erzeugt mit dem namen ,,largeVector''. Mit 
+Hilfe der rnorm()-Funktion werden Zufahlszahlen aus einer Normalverteilung 
+erzeugt.Innerhalb der Klammer legt man fest, wie viele Zufallszahlen generiert 
+werden sollen, in unserem Fall 1e8. Mit den beiden weiteren Einträgen legt man 
+fest, mit welchen Parametern die Verteilung ausgestattet werden soll, in unserem
+Fall mean = 5 und sd = 10.
+
+```{r}
+# Vektor mit dem Namen largeVector generiert.
+largeVector <- rnorm( 1e8, mean = 5, sd = 10 )
+
+```
+
+Wie erzeugen einen Vektor a, der die kummulierte Summe von allen Einträgen
+des largeVektor´berechnet werden, wiedergegeben sollen aber nur die ersten 
+ersten 100 Einträge aus dieser Berechnung. Sprich die ersten Ergebnisse wären 1 
+dann 3 ,6, 10,... usw.
+
+```{r}
+# kummulierte Summe wird gebildetet für alle Einträge des largeVectors und die
+# ersten 100 Einträge daraus sollen zurückgegeben werden.
+a <- cumsum(largeVector)[1:100]
+```
+
+Dieser Befehl gibt den gleichen Output wieder, wie der Vektor a. Der Unterschied
+ist das dieser Befehl schneller ausgeführt wird, da man sich vor der Ausführung
+auf die ersten 100 Einträge innerhalb des largeVectors beschränkt.
+
+```{r}
+# kummulierte Summe wird gebildetet für die ersten 100 Einträge des largeVectors
+b <- cumsum(largeVector[1:100])
+```
+
+Mit dem identical Befehl wir geschaut, ob die beiden Vektoren identisch sind 
+oder nicht. Falls sie identisch sind wird ein ,,TRUE'' ausgegeben, falls nicht
+ein ,,FALSE''. In unserem Fall sind beide Vektoren identisch, deshalb ist der 
+Output True.
+
+```{r}
+# Test auf Gleichzeit von zwei Vektoren
+identical(a,b)
+```
+
+Mit diese Befehl wird die Zeit ausgegeben, die für die Ausfühung beider Befehle 
+nötig ist.Für die Ausführung des 1. Befehls wird weniger Zeit aufgewendet, als 
+für die Ausführung des 2. Befehls. Deshalbt wird der Vektor b schneller generiet
+als der Vektor a.Der Unterschied zwischen den beiden Befehlen ist, dass im 1. 
+Befehl die cumsum Funktion direkt auf die 1-100 Einträge des largeVector 
+angewendet wird. Dadurch ensteht ein geringererer Rechenaufwand. Im 2. Befehl 
+wird die Cumsum-Funktion auf dem gesamten largeVector angewendet und erst 
+anschließend werden die 1-100 Einträge des Outputs der Berechnungen extrahiert.
+Aus diesem Grund ist der Rechenaufwand für diesen Befehl größer, weil für eine 
+größere Menge an Einträgen die kummulierte Summe gebildet werden muss. Aus 
+diesem Grund ist die Rechenzeit für diesen Befehl länger als für den 1.
+
+```{r}
+# benötigte Ausführungszeit des Befehls wird angezeigt
+system.time(cumsum(largeVector[1:100])) 
+system.time(cumsum(largeVector)[1:100]) 
+
+```
+
+# Part III
+
+## Datenimport und erster Überblick über die Daten
+
+Der Titanic Datensatz gibt Auskunft darüber wie viele Passagiere der Titanic 
+überlebt haben.Die Frage die sich dabei stellt ist welche Faktoren auf die 
+Überlebenschance des Passagiere einflussgenommen haben und in welchem Ausmaß.
+Anhand einer logistischen Regressionsanalyse sollen diese Fragen geklärt werden.
+
+Nachdem die Daten geladen worden sind kann sich ein Überblick über die ersten 
+Zeilen und Spalten des Datensatzes mit Hilfe des head() Befehls verschafft 
+werden.Gegbenenfalls könnte so eine fehlerhafte Beschriftung der Spalten erkannt
+werden, die in unserem Datensatz aber nicht vorliegt.Die Dimension des 
+Datensatzes lässt sich mit dim() bestimmen. Daraus geht hervor, dass der 
+Datensatz 1309 Zeilen und 14 Spalten hat. Bei der Struktur der Daten, die mit 
+dem str() ausgegeben wird ist zu erkennen, dass einige Variablen NA' aufweisen. 
+Deshalb müssen die Daten gegebenfalls im Punkt Datenvorbereitung um diese NA's 
+bereinigt werden.
+
+```{r Datenimport}
+# Titanic Datensatz wird geladetn
+load(file = "titanic.Rdata")
+# Betrachtung der ersten Zeilen des Datensatzes
+head(titanic)
+# Größe des Datensatzes
+dim(titanic)
+# Struktur des Datensatzes
+str(titanic)
+```
+
+Um sich einen genaueren Überblick über die Daten zu verschaffen eignen 
+sich sowohl der summary() als auch der describe() Befehl.Mit dem summary() 
+Befehl werden die Lageparameter Min,Max,1. und 3. Quantil sowie der Mean und 
+Median ausgegeben.Mit dem describe() Befehl können ergänzend Anteilswerte an 
+Ausprägungen innerhalb der Variablen angezeigt werden. Es ist zu sehen, dass
+fast doppelt so viele Männer auf dem Schiff waren wie Frauen. Der älteste 
+Passagier war 80 Jahre alt und bei dem jüngsten Passagier handelt es sich um ein
+Baby. Die meisten Passagiere sind in Southhampton an Board gegangen.
+
+```{r Summary und Describe}
+# Summary Output für jede Variable
+summary(titanic)
+# Describe Output des Datensatzes
+describe(titanic)
+```
+
+## Datavorbereitung
+
+Nachdem sich ein Überblick über den Datensatz verschafft wurde,ist 
+festzustellen, dass einige Variablen fehlende Werte oder NA's aufweisen. 
+Ein Löschen dieser Zeilen kommt nicht in Frage, da sich dadurch der Datensatz 
+stark verkleinern würde. Da aber die Vermutung naheliegt, dass einige Variablen,
+die viele NA's aufweisen keine Einfluss auf die survival Chance haben bzw.schwer
+in diesem Zusammenhang zu interpretieren sind, werden die Variablen name, body,
+cabin,boat,ticket und home.dest in der Modellierung nicht verwendet.In unserer 
+Analyse beschränken wir uns auf die Variablen survived, als abhängige Variable 
+und bei den erklärenden Variablen auf pclass,sex, age,sibsp, parch fare und 
+embarked.Aus diesem Grund definieren wir einen neuen Vektor dataTitanic, der 
+nur die Variablen aus dem Datensatz enthält, die in der späteren Regression 
+verwenden werden. Die Auswahl der Variablen erfolgt mit der select=c()
+Funktion. Gleichzetig sollen mit Hilfe des na.omit() Befehls alle Variablen, die
+in die Regression aufgenommen werden um die NA's bereinigt werden. Bei dieser 
+Bereinigung tritt nicht das Problem auf, dass sehr viele Daten wegfallen,
+da die meisten NA's in den von uns bereits ausgeschlossenen Variablen enthalten
+sind.
+Der neuerzeugte Vektor weist 266 Beobachtungen weniger auf als der 
+Ursprungsdatensatz. Dies wird mit Hilfe des paste() Befehls ausgegeben,wobei die
+Differenz innerhalb des Befehls den Unterschied in der Anzahl der Beobachtungen
+zwischen den beiden Datensätzen darstellt.Da die Variabel survived eine 
+kategoriale Variabel ist, aber innerhalb des Datensates nicht als Faktorvariabel
+deklariert ist, was durch den is.factor() Befehl geprüft werden kann, der FALSE 
+ausgibt, muss sie faktorisiert werden. Dies wird mit Hilfe des as.factor() 
+Befehls gemacht.Anschließend wird mit Hilfe des sapply() Befehls geschaut, ob 
+einerseits survived jetzt als Faktor hinterlegt ist und ob alle anderen 
+Variablen  nach der NA-Bereinigung immer noch den richtigen Datentyp aufweisen. 
+Dies ist der Fall.
+
+```{r Datenvorbereitung, echo=TRUE}
+# Beschränkung des Datesatzes auf die relevanten Variablen.
+dataTitanic <- na.omit(subset(titanic, select = c(1, 2, 4, 5, 6, 7, 9, 11)))
+# Anzahl der Beobachtungen die gelöscht wurden
+paste("Anzahl der Beobachtungen die gelöscht wurden ist", dim(titanic)[1] -
+        dim(dataTitanic)[1])
+# Prüfung, ob survived Faktor ist.
+is.factor(dataTitanic$survived)
+# Faktorisierung der survived Variabel.
+dataTitanic$survived <- as.factor(dataTitanic$survived)
+# Überblick über die Datentypen der Variablen im Datensatz
+sapply(dataTitanic, class)
+```
+## Descriptive Analyse der Daten
+ 
+Zur deskriptiven Analyse eignen sich Plots und Häufigkeitstabellen, wobei hier 
+beachtet werden muss, welche Variablen im Datensatz vorhanden sind. Für die 
+Variablen pclass, survived,sex und embarked wird ein barplot gezeichnet. Dafür 
+wird zuerst eine neue Funktion für das Zeichnen des Barplots definiert. Dies 
+geschieht mit Hilfe des funktion() Befehls. Diese Funktion wird dem Ausdruck 
+plottingBar zugewiesen. Die Funktion des Zeichnens wird innerhalb der 
+geschweiften Klammern angegeben, in unserem Fall barplot(). Innerhalb der 
+Klammer des barplot() Befehls legt man fest für welche Informationen der Plot 
+gezeichnet werden soll. In unserem Fall für die Häufigkeitstabellen der 
+einzelnen Variablen, was mit table(x) definiert ist. Die Farbe und der Titel des
+Barplots können mit title und c eingestellt werden. Nachdem die Funktion 
+definiert wurde werden für alle vier Variablen Barplots gezeichnet.
+Im 1. Barplot ist zu erkennen, dass die meisten Passagiere die 3. Klasse 
+gebucht hatten, während die 1. und 2. Klasse nahezu von der gleichen Anzahl an
+Personen gebucht wurden. Der 2. Barplot zeigt die Anzahl der Personen die 
+überlebt haben oder nicht. Daraus ist abzulesen das deutlich mehr Passagiere 
+gestorben sind als überlebt haben. Die Geschlechteraufteilung innerhalb der 
+Passagiere ist im 3. Barplot zu erkennen. Es waren mehr Männer auf dem Schiff
+vertretten als Frauen (zweimal mehr). Aus dem 4. Barplot ist abzulesen, dass die
+meisten Passagiere in Southampton und die wenigsten in Queenstown an Board 
+gegangen sind. Damit alle Plots nicht seperat auf einer Seite stehen, wird der 
+par() Befehl genutzt, um die Parameter der Plots so einzustellen, dass zwei
+Plots nebeneinander stehen können.
+
+```{r Barplots}
+# Das Zeichnen eines Barplots
+# Barplot Funktion definiert
+plottingBar <- function (x, title,c){
+  barplot(table(x), main = title, col = c)
+}
+# Parameter der Plots werden eingetellt. 
+par(mfrow = c(2, 2)) 
+# Zeichnen des Barplots für Faktorvariabeln: Pclass, Survived,Sex
+plottingBar(na.omit(titanic$pclass), title = "Pclass", c = "blue")
+plottingBar(na.omit(titanic$survived), title = "Survived", c = "red")
+plottingBar(na.omit(titanic$sex), title = "Sex",c = "green")
+plottingBar(na.omit(titanic$embarked), title = "Embarked", c = "yellow")
+```
+
+Für die Variablen age,fare,sibsp und parch wurden Histogramme und Boxplots
+gezeichnet. Dafür wurde die hist() Funktion verwendet, wobei innerhalb der 
+Klammer die gewünschte Variable eingetragen wird für die das Histogramm 
+gezeichnet werden soll. Anschließend wird der Titel und die Beschriftung der
+x-Achse hinter main und xlab festgelegt.Das gleiche Vorgehen gilt für das 
+Zeichnen des Boxplots, wobei hier die Funktion boxplot() verwendet wird, wobei 
+innerhalb der Klammern die gleichen Informationen, die für das Zeichnen des 
+Histogramms verwendet wurden, angegeben werden. Im 1. Histogrammm ist die
+Altersstruktur der Passagiere dargestellt. Es ist eine leicht linksschiefe
+Verteilung zu erkennen, wobei der Großteil der Passagiere zwischen 20 und 30 
+Jahre alt ist. Es waren wenig Kinder und ältere Menschen auf dem Schiff.Diese 
+Erkenntnis egibt sich ebenfalls aus dem zur Variable age gezeichnetem Boxplot, 
+da der Median knapp unter 30 liegt.
+Das 2. Histogramm zeigt Verteilung der Preise von Fahrtkarten an. Es wurden sehr
+viele günstige und sehr wenig teure Karten verkauft, was man ebenfalls im 2. 
+Boxplot anhand der Outliers und der sehr eng beieinander liegenden unteren
+und oberen Quantile sehen kann. 
+Im 3. Histogrmm ist zu erkennen, dass die Mehrheit der Passagiere wenig bis 
+keine Geschwister oder keinen Ehepartner an Board hatte.Diese Erkenntnis ist 
+ebenfalls im 3. Boxplot zu erkennen, da der Median bei 0 liegt und es wenige 
+Outliers gibt.Der Großteil der Passagiere war ohne Kinder oder Eltern 
+unterwegs, was aus dem 4.Histogrammm hervorgeht. Diese Erkenntnis wird durch den
+4. Boxplot gestützt, da der Median ebenfalls bei 0 liegt.
+
+```{r}
+# Zeichnen von Boxplots und Histogrammen
+
+# Parameter geändert,damit Histogram neben Bxplot angezeigt wird.
+par(mfrow = c(1,2))
+
+hist(na.omit(titanic$age), xlab = "Alter der Passagiere", main = "Histogram zum 
+     Alter der Passagiere")
+boxplot(na.omit(titanic$age), main = "Boxplot zum Alter der Passagiere")
+hist(na.omit(titanic$fare), xlab = "Fare", main = "Histogramm zum Preis der 
+     Fahrkarten")
+boxplot(na.omit(titanic$fare), main = "Boxplot zum Preis der Fahrkarte")
+hist(na.omit(titanic$sibsp), xlab = "Sibsp", main = "Histogramm zur Anzahl der 
+Ehepartner
+     und Geschwister an Board")
+boxplot(na.omit(titanic$sibsp), main = "Boxplotzur zur Anzahl der Ehepartner und 
+        Geschwister an Board")
+hist(na.omit(titanic$parch), xlab  = "Parch", main = "Histogramm zur Anzahl der 
+     Eltern/Kinder an Board")
+boxplot(na.omit(titanic$parch), main = "Boxplot zur Anzahl der Eltern/Kinder an 
+        Board")
+```
+
+Eine andere Möglichkeits der Visualisierung der Daten ist durch den Mosaikplot
+gegeben. Dafür müssen die Variablen für die der Plot gezeichnet werden sollte
+innerhalb eines Vektors festgehalten werden. Daher wird der Vektor tableMosaik
+erstellt. Mit Hilfe des table() Befehls werden innerhalb der Klammern die beiden 
+interessierenden Variablen festgehalten, survived und sex.
+Es soll am Ende geprüft werden, ob mehr Frauen oder Männer überlebt haben, bzw.
+wie das Geschlecht sich auf die Übelebenschancen ausgewirkt hat. Die 
+mosaikplot() Funktion gibt schließlich die gewünschte Graphik aus. Es ist zu 
+erkennen, dass mehr Frauen überlebt haben als Männer.
+
+```{r Mosaikplot, warning=FALSE}
+# Mosaikplot
+
+# Tabelle mit Daten für den Mosaikplot.
+tableMosaik <- table(titanic$survived, titanic$sex)
+# Mosaikplot wird gezeichnet.
+mosaicplot(tableMosaik, legend.text = T, col = c(7,4), main = "Mosaikplot", 
+           xlab = "Überlebt: Nein, Ja", ylab = "Geschlecht: Mann Frau")
+```
+
+Neben deskriptiven Analyse durch Zuhilfenahme von Plots kann man sich auch 
+relativen oder absoluten Häufigkeiten anzuschauen.Bei der Betrachtung sollte man
+zu den gleichen Ergebnissen gelangen wie mit Hilfe der Plots. Zuerst wird dafür 
+ein neuer Vektor mit dem Namen dataTable erzeugt. In ihm werden genau die drei 
+oben erwähnten Variablen festgehalten für die man sich die Häufigkeiten ausgeben 
+lassen will. Anschließend wird mit dem table() Befehl eine Kontingenztabelle 
+erzeugt, in der zu erkennen ist wie viele Passagiere aus welcher Klasse mit 
+welchem Geschlecht überlebt haben oder nicht. Es ist zu erkennen, dass mehr 
+Frauen überlebt haben als Männer. Berücksichtigt man noch die Klasse in der sich
+ein Passagier befunden hat lässt sich sagen, dass mehr Passagiere aus der 1. 
+Klasse überlebt haben als aus den restlichen Klassen. Besonders stark fällt dies
+bei den Frauen auf, wo nur 5 Personen aus der 1. Klasse nicht überlebt haben. 
+Bei den Männern ist das Bild nicht so extrem. Dort war die Anzahl der Passagiere
+aus der 1. und 2. Klasse, die überlebt hatten,nahezu gleich (53/59).Möchte man 
+sich zu den absoluten Häufigkeiten die relative Häufigkeiten ausgeben lassen
+eignet sich der prop.table() Befehl dafür.
+
+```{r ,echo = TRUE}
+
+# Absolute und relative Häufigkeiten für die Variablen pcclass,sex, survived
+
+# Neuer Vektor erstellt mit den Variablen survived, pclass und sex
+dataTable <- dataTitanic[1:3]
+# Absolute Häufigkeiten zu den drei Variablen, pclass sex und survived 
+# ausgegeben.
+table(dataTable)
+# Relative Häufigkeiten zu den drei Variablen, pclass sex und survived 
+# ausgegeben.
+prop.table(table(dataTable))
+```
+
+Im nächsten Schritt der deskriptiven Analyse schauen wir uns die Korreleation 
+innerhalb der Variablen des Datensatzes dataTitanic an. Um eine 
+Korrelationsmatrix für alle Variablen zu erstellen müssen alle als Faktor 
+deklarierten Variablen zum Datentyp integer umkodiert werden. Dafür wird zuerst
+ein Vektor erzeugt mit dem Namen dataCor der dem Vektor dataTitanic entspricht. 
+Wenn wir jetzt die Variable survived direkt in einen integer Datentyp umwandeln
+würden,ergäbe sich das Problem das die Bezeichnungen von 0 und 1 auf 1 und 2 
+springen und man die Ausprägungen der Variable nicht den Werten zuordnen könnte.
+Aus diesem Grund wird die survived Variable zuerst zu einem character, mit Hilfe
+der as.character Funktion umgewandelt und den character Werten "0" und "1" die 
+Werte 1 und 0 zugeordnet. Anschließend wird die survived Variable in einen 
+integer umgewandelt mit Hilfe der as.integer() Funktion. Dieses Vorgehen wird
+auf die Variablen pclass,sex und embarked übertragen.
+
+Zusammenfassung der Korrelationsmatrix:
+
+Allgemein ist zu sagen, dass eine positive Korrelation mit blau und eine 
+negative Korrelation mit rot gekennzeichnet ist. Die Stärke der Korrealtion
+wird durch die Farbskala angegeben. Es ist zu erkennen, dass pclass und survived 
+negativ korreliert sind, was so viel bedeutet wie, je schlechter die Klasse ist
+in der sich ein Passagier befunden hat, ausgehend davon das die 1. Klasse die 
+beste war,desto geringer war seine Überlebenschance. Diese Erkenntnis ist 
+konsitent zu dem Ergebniss aus der Kontingenztabelle. Darüber hinaus ist zu 
+erkennnen, dass der Ticketpreis mit der Klasse negativ korreliert ist aufgrund 
+der Kodierung da die 1. Klasse die beste und somit die teuerste ist und die 3.
+die günstigste und somit die schlechteste ist. Denn eine bessere Klasse geht 
+immer mit einem höheren Ticketpreis einher,was logisch erscheint.
+Ein dritter Aspekt der aus dem Korrelationsdiagramm hervorgeht ist, dass sex und
+survived negativ miteinander korrelliert sind. Dies bedeutet, dass männliche 
+Passagiere eine niedrigäre Überlebenschance haben als weibliche,was ebenfalls 
+mit den Ergebnissen aus der Kontingenztabelle übereinstimmt. Der letzte Punkt 
+den es anzumerken gibt, ist das pclass und age negativ korreliert sind, was so 
+viel beudetet wie ältere Menschen können sich eine bessere Klasse leisten, 
+sprich somit auch ein teurerers Ticket als jüngere Menschen. Was ebenfalls 
+plausibel erscheint.
+
+```{r Korrelationsmatrix}
+
+# Korrelationsmatrix wird erstellt
+
+# neue Vektor erzeugt mit Daten aus dataTitanic
+dataCor <- dataTitanic 
+
+# Survived wird zu einem integer umgewandelt.
+
+# Survived Variable wird zu einem character umgewandelt.
+dataCor$survived <- as.character(dataCor$survived)
+# Den Ausprägungen der survived Variable werden die richtigen Ausprägungen
+# zugewiesen.
+dataCor$survived[dataCor$survived == "1"] <- 1
+dataCor$survived[dataCor$survived == "0"] <- 0
+# Survived Variable wird zu einem integer umgewandelt.
+dataCor$survived <- as.integer(dataCor$survived)
+
+# Pclass wird zu einem integer umgewandelt.
+
+# Pclass Variable wird zu einem character umgewandelt.
+dataCor$pclass <- as.character(dataCor$pclass)
+# Den Ausprägungen der survived Variable werden die richtigen Ausprägungen
+# zugewiesen.
+dataCor$pclass[dataCor$pclass == "1st"] <- 1
+dataCor$pclass[dataCor$pclass == "2nd"] <- 2
+dataCor$pclass[dataCor$pclass == "3rd"] <- 3
+# Pclass Variable wird zu einem integer umgewandelt.
+dataCor$pclass <- as.integer(dataCor$pclass)
+
+# Sex wird in einen integer umgewandelt.
+
+# Sex Variable wird zu einem character umgewandelt.
+dataCor$sex <- as.character(dataCor$sex)
+# Den Ausprägungen der survived Variable werden die richtigen Ausprägungen
+# zugewiesen.
+dataCor$sex[dataCor$sex == "male"] <- 1
+dataCor$sex[dataCor$sex == "female"] <- 0
+# Sex Variable wird zu einem integer umgewandelt.
+dataCor$sex <- as.integer(dataCor$sex)
+
+# Embarked wird zu integer umgewandelt
+
+# Embarked Variable wird zu einem character umgewandelt.
+dataCor$embarked <- as.character(dataCor$embarked)
+# Den Ausprägungen der survived Variable werden die richtigen Ausprägungen
+# zugewiesen.
+dataCor$embarked[dataCor$embarked == "Southampton"] <- 1
+dataCor$embarked[dataCor$embarked == "Cherbourg"] <- 2
+dataCor$embarked[dataCor$embarked == "Queenstown"] <- 3
+# Embarked Variable wird zu einem integer umgewandelt.
+dataCor$embarked <- as.integer(dataCor$embarked)
+# Korrelationsmatrix wird in einem Vektor abgelegt 
+correlationMatrix <- cor(dataCor)
+# Plot der Korrelationsmatrix
+corrplot(correlationMatrix, method = "ellipse")
+```
+
+## Modellierung
+
+In diesem Punkt wird die abhängige Variable survived auf die erklärenden 
+Variablen age,parch,fare,sex,pclass und embarked regressiert, wobei bei sex
+female, bei pclass die erste Klasse und bei embarked Cherbourg als Referenz-
+kategorien verwendet werden. Die Regression wird mit Hilfe der glm() Funktion 
+durchgeführt, da wir eine logistische Regression durchführen. Dies wird 
+innerhalb der glm() Funktion definiert. Der Regressionsoutput wird mit Hilfe
+des summary() Befehls ausgegeben, der auf den neudefinierten Vektor glmModel
+angwendet wird.
+
+```{r Regression}
+
+# Regression wird durchgeführt
+glmModel <- glm(survived ~ ., family = binomial(link = "logit"),data = 
+                  dataTitanic)
+# Regressionsoutput wird ausgegeben.
+summary(glmModel)
+```
+
+## Signifikanz und Interpretation der Koeffizienten
+
+Zur Signifikanz der erklärenden Variablen die in der Regression verwendet wurden
+ist zu sagen, dass bis auf parch und fare alle Variablen signifikant sind und 
+somit einen Einfluss auf die Überlebenschance haben. Sibsp und beide embarked 
+Koeffizientensind sind zu einen Signifikanzniveau von alpha=0.01 signifkant.Die 
+Koeffizienten der Variablen sex und pclass sind zu einem Signifikanzniveau von 
+alpha=0.001 signifikant. Das alles sieht man daran, da der p-Wert <= alpha ist,
+bzw. an den Sternchen im summary Output, hinter den Koeffizienten.
+
+Bei einer logistischen Regression können die Koeffizieten nicht einfach 
+interpretiert werden. Die Vorzeichen geben aber die Richtung des marginalen 
+Effekts an.Dementsprechend bedeuetet ein positives Vorzeichen, dass die 
+Chance zu überleben mit der Variable positiv zusammenhängt. Ein negatives
+Vorzeichen bedeutet, dass die Chance zu überleben mit der Variable negativ
+zusammenhängt.Sowohl die zweite als auch dritte Klasse weißen einen negativen 
+Effekt auf die Überlebenswahrscheinlichkeit der Passagiere, im Vergleich zur 
+Referenzkategorie 1.Klasse, auf.Dementsprechend lässt sich sagen, dass die 
+Chance zu überleben geringer für Passagiere aus der 2. und 3. Klasse im 
+Vergleich zu Passagieren aus der 1. Klasse war. Für das Geschlecht ist ebenfalls 
+ein negativer Koeffizient zu verzeichnen. Das bedeuetet, dass Männer im 
+Vergleich zu Frauen eine geringere Chance hatten zu überleben. Das Vorzeichen 
+des age Koeffizienten ist ebenfalls negativ. Was bedeutet, dass ältere Menschen 
+im Vergleich zu jüngeren Menschen eine geringere Chance hatten zu überleben.
+Passagiere,die mit weniger Geschwistern oder ohne Ehepartner an Board waren 
+hatten eine größere Chance zu überleben, als Passagiere mit vielen Geschwistern 
+oder Ehepartner.Die letzten beiden Koeffizieten der Regression sind ebenfalls 
+negativ, was bedeuetet, dass die Chance zu Überleben für Passagiere aus 
+Cheerbough größer war als für Passagiere aus Queenstown oder Southampton. Auf 
+die Regressionsparameter von parch und fare wird auf Grund ihrere Insignifikanz 
+nicht weiter eingegangen.Ist man an der genauen Einflussstärke der Variablen 
+auf die Überlebenswahrscheinlichkeit interessiert bestimmt man die Odds-Ratios.
+Dafür wird ein neuer Vektor mit dem Namen oddsRatio generiert, in dem auf alle 
+Koeffizienten der Regression die Exponentialfunktion angewendet wird. Demnach 
+steigen die Odds falls das Ergebnis größer 1 ist und sinken wenn es kleiner 1 
+ist, wenn man die abhängige Variable um eins erhöht. Beispielsweise würde sich 
+bei einer Erhöhung des Alters um 1 eine Verringerung der Odds um 0,9625942 
+ergeben. Möchte man zusätzlich noch Konfidenzintervalle bestimmen,verwendet man
+die confint() Funktion, wobei innerhalb der Klammern das Modell festgelegt
+wird, für dessen Parameter Konfidenzintervalle bestimmt werden sollen. 
+Auf die Konfidenzintervalle muss ebenfalls die Exponentialfunktion angewendet
+werden. Möchte man sowohl die Odds-Ratio als auch die dazugehörigen 
+Konfidenzintervalle in einem Schritt berechnen und darstellen,eignet sich der 
+cbind() Befehl für die Verknüpfung der Ergebnisse aus beiden Rechnungen, die 
+durch exp() ausgeführt wird.
+
+```{r Interpretation und Signifikanz der Koeffizienten}
+# Odds-Ratios
+oddsRatio <- exp(coef(glmModel))
+oddsRatio
+# Odds-Ratios und Konfidenzintervalle
+exp(cbind(OR = coef(glmModel), confint(glmModel)))
+```
+
+## Modelgüte
+
+Um Aussagen über die Modelgüte zu treffen wird auf das McFadden Rsquared und
+PseudoR geschaut. Dafür wird zuerst ein Regressionsmodell mit nur dem intercept 
+definiert und im Vektor nullModel hinterlegt. Das es sich um eine Regression auf
+einen Intercept handelt erkennt man daran, dass eine 1 hinter survived steht.
+Anschließend werden beide Gütemaße in den Variablen mcFaddensR und 
+pseudoRsquared, gemäß ihrer Formeln, bestimmt. Dabei gibt die Funktion logLik()
+die Loglikelihood des Modells wieder, was innerhalb der Klammern festgelegt 
+wird. Beide Gütemaße werde mit Hilfe des cbind() Befehls zusammengelegt und im
+modelGuete Vektor dargestellt. Sie deuten auf einen  guten Erklärungsgehalt des 
+Modells hin. 
+
+```{r Pseudobestimmtheitsmaße}
+# Beurteilung der Güte des Models über Pseudobestimmtheitsmaße
+
+# Regression mit nur dem Intercept
+nullModel <- glm(survived ~ 1, family = binomial(link  = "logit"),data = 
+                   dataTitanic)
+nullModel
+
+# Bestimmung von Mc-Fadden's Rsquared
+mcFaddensR <- 1 - (logLik(glmModel) / logLik(nullModel))
+# Bestimmung vom PseudoR
+pseudRquared <- 1 - 1 / 1 + 2 * (logLik(glmModel) - logLik(nullModel)) /
+  dim(dataTitanic)[1]
+# Zusammenfassung der Bestimmtheitsmaße
+modelGuete <- (cbind(mcFaddensR, pseudRquared))
+modelGuete
+```
+
+Eine weitere Möglichkeit die Modelgüte zu beurteilen ist es eine 
+Klassifikationstabelle zu erstellen, um zu erkennen wie vielen Passagiere das 
+Modell, mit einem Schwellenwert von 0.5 (Standard), dem richtigen Zustand 
+zuordnet, sprich überlebt oder nicht.Dafür wird die Funktion 
+confusion.matrix() verwendet, wobei innerhalb der Klammern einerseits die 
+gefitteten Werte der Regression mit Hilfe des fitted() Befehls verwendet werden
+und andererseits die abhängige Variable aus dem Datensatz festgelegt wird, in 
+unserem Fall survived.Es ist zu erkennen, dass 525 der 618 Passagiere, die nicht
+überlebt haben richtig klassifiziert worden sind. Bei den Passigieren die 
+überlebt haben sind es 299 von 425, die richtig klassifiziert wurden. In der 
+Summe ergibt das eine korrekte Klassifikationsrate von (299+525)/1043=0,7900, 
+was auf eine gute Modellspezifikation hindeutet. Diese Zahl wird wieder mit 
+Hilfe der paste() Funktion ausgegeben.
+
+```{r Klassifikationsmatrix}
+# Klassifikationstabelle
+conMatrix <- confusion.matrix(dataTitanic$survived, fitted(glmModel))
+conMatrix
+paste("Korrekte Klassifikationsrate beträgt", (conMatrix[4] + conMatrix[1]) /
+        dim(dataTitanic)[1])
+```
+
+Eine andere Möglichkeit die Modelgüte zu bewerten ist es ist es sich die 
+deviance table anzuschauen, mit Hilfe der annova() Funktion, um Aussagen über 
+die Veränderung der Varianz treffen zu können, wenn Variablen zur Regression
+hinzugefügt werden.Der Unterschied zwischen der Nulldeviance und der 
+Residualdeviance zeigt, wie unser Modell sich gegenüber das Nullmodell 
+(ein Modell mit nur einem Intercept) verhält.Wenn wir die Tabelle analysieren, 
+sehen wir eine Abnahme der Abweichung, wenn jede Variable einzeln hinzufügen.
+Es ist zu erkennen, das die Variablen pclass sex und age stark signifikant die 
+deviance reduzieren auf Grund ihrer kleinen p-Werte. Embarked und Sibsp 
+verbessern ebenfalls das Modell aber nicht so stark wie die anderen drei 
+Variablen. Die Effekte von parch und fare auf die deviance im Vergleich zum 
+Nullmodell sind nicht signifikant.
+
+```{r Deviance table}
+
+# Table of Deviance
+anova(glmModel, test = "Chisq")
+```
+
+Es besteht noch die Option das Modell gegebenenfalls anzupassen, um den 
+Erklärungsgehalt zu erhöhen. Dafür wird die step() Funktion genutzt. Damit 
+werden Variablen entweder schrittweise aus der Regression entfernt oder ergänzt.
+Dabei sollte geschaut werden, ob das AIC-Kriterium kleiner wird oder nicht. Das 
+Modell mit dem kleinsten AIC ist im Vergleich zu den restlichen Modellen, die
+mit Hilfe der Stepfunktion generiert wurden, das Beste. Innerhalb der 
+Stepfunktion ist es möglich zu entscheiden ob Variablen zum Modell mit nur einem
+Intercept hinzugefügt werden sollen, in dem man als direction="forward" 
+einstellt oder in den Variablen aus dem ganzen Modell nacheinander schrittweise
+entfernt werden. Diese Einstellung ist durch direction=backward gegeben. Im 
+vorliegenden Fall wurde die Stepfunktion mit der forward Einstellung 
+durchgeführt. Im 1. Schritt zeigt die Variable sex die größmögliche Reduktion 
+des AIC. Anschließend ist dies für die Variable pclass zu erkennen. Danach 
+werden embarked und sibs als zusätzliche Regressoren in die Regression 
+aufgenommen. Fare und parch werden nicht mehr als erklärende Variablen in die 
+Regression aufgenommen, da durch sie keine starke Verrringerung des AIC 
+entsteht. Grundsätzlich ist festzuhalten, dass für die Variablen sex, pclass und
+age die Verrringerung des AIC am größten war.Diese Feststellung deutet 
+daraufhin, dass diese Variablen den größten Erklärungsgehalt zum Modell
+beitragen. Das fare und parch nicht mehr im Modell auftauchen ist nicht 
+verwunderlich, da sie bereits im Summary-Output keine Signifikanz aufgewiesen 
+haben. Anschließend werden wieder das McFadden's Rsqaured und das PseudoRsquared
+für das neue Modell berechnet und mit dem alten Modell verglichen. Die 
+Modellanpassung hat zwar zu einer Verrringerung des AIC von 974,57 zu 970,88 
+geführt, aber ebenfalls zu einer minimalen Verrringerung beider Gütemaße. Das 
+liegt daran, da Gütemaße generell bei einer Zunahme der erklärenden Variablen 
+steigen, wenn sie nicht adjusted sind.
+Unser Modell hat bereits vor der SteppFunktion einen gute 
+Erklärungsgehalt aufgewiesen hat. Wenn man zum Stepmodell ebenfalls eine 
+Klassifikationsmatrix darstellt erkennt man das hier 2 Passagiere weniger 
+richtig klassifiziert werden, was keinen großen Unterschied zu unserem
+Modell darstellt.
+
+```{r Stepfunktion und Gütemaße}
+# Ausführung der Stepfunktion
+modelStep <- step(nullModel,scope = ~ sex + age + pclass + embarked + sibsp +
+                    parch + fare,
+                  direction = "forward")
+summary(modelStep)
+
+# Bestimmung von Mc-Fadden's Rsquared
+mcFaddensR2 <- 1 - (logLik(modelStep) / logLik(nullModel))
+# Bestimmung vom PseudoR
+pseudRquared2 <- 1 - 1 / 1 + 2 * (logLik(modelStep) - logLik(nullModel)) /
+  dim(dataTitanic)[1]
+# Zusammenfassung der Bestimmtheitsmaße
+modelGuete2 <- (cbind(mcFaddensR2, pseudRquared2,mcFaddensR,pseudRquared))
+modelGuete2
+# Klassifikationstabelle
+conMatrix2 <- confusion.matrix(dataTitanic$survived, fitted(modelStep))
+conMatrix2
+```
+
+## Fazit
+
+Zusammengefasst lässt sich sagen, das die zu Beginn der Analyse aufgestellten 
+Hypothesen durch die Regressionsanalyse bestätigt wurden. Es haben mehr Frauen 
+als Männer überlebt. Diese Tendez war innerhalb der Koeffizieten anhand ihrer
+Vorzeichen zu erkennen. Ältere Passagiere sowie auch Passagiere aus den unteren
+Klassen hatten eine geringere Überlebenschance. 
+
+
