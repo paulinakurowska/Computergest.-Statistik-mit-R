@@ -1,0 +1,542 @@
+---
+title: "2.Seminararbeit"
+author:
+- Dieter Kurakov 
+- Paulina Kurowska
+- Justyna Ziemlewicz
+abstract: > 
+  In der vorliegenden Arbeit wird das Erstelllen von Funktionen dargelegt
+  und verschiedene Scoping Rules anhand von Beispielen erläutert.
+fontsize: 11
+lof: TRUE
+graphics: true
+documentclass: article
+output: 
+  pdf_document:
+    toc: true
+    latex_engine: pdflatex
+    toc_depth: 2
+    number_sections: true
+    keep_tex: true
+---
+# Part I Funcitons
+
+##Function I:
+
+Es soll eine Funktion erstellt werden, die einen Vektor ohne NA's ausgeben soll.
+Dafür wird die Funtkion dropNA erstellt, die nur ein Argument nimmt.
+Die Funktion selbst wird mit Hilfe des function() Befehls erzeugt, wobei das 
+Argument ein atomic Vektor x ist. Innerhalb der geschweiften Klammern wird die 
+expression festgehalten, also das was nach Aufruf der Funktion passieren soll.
+In unserem Fall soll das Argument x zurückgegeben werden, was durch den return()
+Befehl bewirkt wird. Jedoch soll nicht das gesamte Argument x ausgegeben werden,
+sondern nur der Teil, der keine NA's enthält.Daher wird das Argument durch 
+Subsetting auf alle Bestandteile ohne NA's beschränkt. Dies geschieht mit der 
+is.na() Funktion, wobei davor noch der ! Operator steht. Mit der is.na() 
+Funktion wird zuerst eine Prüfung durchgeführt an welchen Stelle im Argument 
+NA's vorhanden sind, wobei TRUE und FALSE Werte nach dieser Prüfung zurück 
+gegeben werden.Durch den ! Operator, den man als ,,nicht'' interpretieren kann,
+wird festgehalten, dass nur Werte zurückgegeben werden sollen, die bei dieser 
+Prüfung durchgefallen sind, sprich einen FALSE Eintrag haben und somit keine 
+NA's sind.
+
+```{r dropFunction}
+
+dropNa <- function(x) {  #  Argument festgelegt
+  return(x[ ! is.na(x)])  #  expression festgelegt
+}
+```
+
+Ob die Funktion richtig funktioniert, lässt sich durch den Vergleich zweier 
+Vektoren durchführen mit der all.equal() Funktion. Der erste Vektor enhält einen
+NA Wert der zweite keinen.Beide sind sonst in ihrem Aufbau gleich. Auf den 
+Vektor mit dem NA Wert wird die dropNA Funktion angwendet. Wie man erkennen kann
+sind dadurch die beiden Ausdrücke gleich, sodass die all.equal Funktion den Wert
+TRUE zurück gibt,was die Funktionalität von dropNA bestätigt.
+
+```{r Test dropNA }
+# Test der dropNA Funktion
+
+all.equal(dropNa(c(1, 2, 3, NA, 1, 2, 3)), c(1, 2, 3, 1, 2, 3))
+```
+
+## Functions II:
+
+###Part 1
+
+In diesem Aufgabenteil soll eine Funktion definiert werden, die einen numeric 
+Vektor ausgibt, der den Mittelwert, die varianz und die Standardabweichung, sowie
+den Standardfehler von einem Argument, berechen soll. Dafür wird ein Vektor 
+meanVarSdSe erzeugt, dem eine Funktion zugeordnet wird. Die Funktion selbst wird
+mit dem function() Befehl erzeugt, wobei das Argument innerhalb der Klammern 
+festgehalten wird , in diesem Fall x.Um die Lage-und StreungsmaÃŸe zu brechnen, 
+werden die Funktion mean(), var(), und sd() benötigt und in der expression, 
+innerhalb der geschweiften Klammern, angegeben.FÃ¼r jede dieser Brechnungen wird
+eine neue Variable erzeugt, die die entsprechende Bezeichung trägt. (mean, var,
+sd). Für die Berechnung des Standardfehlers wird auf die Formel entsprechend
+dem Aufgabenblatt zurückgegriffen. Diese Formel wird dem Ausdruck se 
+zugeorndet. Die Kardinalität von x wurde mit der Hilfe von length() Funktion 
+erzeugt. Damit alle Kennzahlen gleicheztig berechnet und angezeigt werden 
+sollen wird ein 'result' Vektor konstruiiert, der alle Kennzahlen mit der 
+dazugehörigen Beschriftung enthält.Abschließend wird dieser durch die return() 
+Funktion wiedergegeben.
+
+```{r meanVarSdSE}
+
+# Erstellung einer Funktion zur Berechnung von mean, sd, var und se eines 
+#Vektors
+
+meanVarSdSe <- function(x){
+  mean <- mean(x)
+  var <- var(x)
+  sd <- sd(x)
+  se <- sd / (length(x)) ^ 0.5
+  result <- c(mean = mean, var = var,sd = sd,se = se)
+  return(result)
+}
+```
+
+Um die Funktionalität der erzeugten Funktion zu testen wird ein Vektor y 
+definiert, der eine Zahlenfolge von 1-100 enthält. Anschließend wird die 
+meanVarSdSe() Funktion auf ihn angewendet. Der Output stimmt mit dem auf dem 
+Aufgabenblatt überrein = die Funktion funktioniert.
+
+```{r Test der Funktion}
+
+# meanVarSdSe Funktion wird getestet
+
+y <- 1:100
+meanVarSdSe(y)
+
+```
+
+### Part 2
+
+Die zuvor erstellte Funktion wird auf einen Vektor angewendet, der aus einem 
+NA-Wert und einer Zahlenfolge 1-100 besteht.Die Vermutung liegt nahe, dass 
+Berechnungen, die mit der meanVarSDSe() Funktion durchgeführt werden,zu NA's 
+und nicht zu einem sinvollen Ergebnis führen werden.
+
+```{r}
+x <- c(NA, 1:100)
+meanVarSdSe(x)
+
+```
+
+Nachdem der Code durchgelaufen ist, wurde unsere Vermutung bestätigt. Da ein
+NA im Vektor vorhanden ist, kann die Funktion keine Berechnungen für die 
+Lage-und Streuungsmaße durchführen. Daher muss die Funktion für den Fall 
+angepasst werden, dass in einem Vektor, auf den sie angewendet wird, NA's 
+vorhanden sind. Wir wissen schon, dass ein Argument 'na.rm' in jeder Funktion 
+existiert: mean(), var(), sd(), für das man bestimmen kann, ob die NA's gelöscht 
+werden sollen ( mit TRUE als Wert) oder nicht (na.rm=FALSE). Deshalb wird ein 
+zusätzliches '...' Argument innerhalb der Funktion meanVarSdSe() ergänzt. Mit 
+dem Argument '...' können Argumente an andere Funktionen übergeben werden, ohne 
+diese explizit im Argumentenbereich der Funktion erwähnen zu müssen. Damit das funktioniert muss das '...' Argument ebenfalls in den Funktionen mean(), sd() 
+und var() festgehalten werden.Bei der Berechnung des Standardfehlers wird gemäß 
+der Formel aus dem Aufgabenblatt die Anzahl der Einträge innerhalb des Vektors 
+auf dem die Funktion angwendet wird benötigt. Deshalb ist drauf zu achten, dass 
+'NA' Einträge nicht mitberücksichtigt werden, da für sie keine Werte in die 
+Berechnungen von mean() sd() und var() einfließen.Um die richtige Kardinalität 
+von x jetzt zu bestimmen muss man die Anzahl der NA-Einträge berechnen.
+Dafür wird die Funktion is.na() angewendet. Diese gibt TRUE oder FALSE Werte aus,
+je nachdem ob es sich bei einem Eintrag um ein NA handelt oder nicht. Da TRUE und 
+FALSE Einträge mit 1 und 0 kodiert sind, wird mit Hilfe der sum() Funktion die 
+Anzahl NA-Einträge innerhalb des x Arguments bestimmt. Dieser Wert wird dann 
+von der Gesamtanzahl der Einträge innerhalb des x Arguments, unter Berücksichtigung 
+der NA-Werte, abgezogen. Die Gesamtanzahl der Einträge wird mit Hilfe der length() Funktion bestimmt. 
+Anschließend wird ein result Vektor erzeugt, der alle Berechnungen entsprechend 
+ihrer innerhalb der Funktion definierten Bezeichungen mean, var,sd und se
+zusammenfasst. Die return() Funktion wird abschließend auf den result Vektor 
+angewendet, damit der Vektor angezeigt wird. Wenn jetzt die Funktion meanVarSdSe
+ausgeführt wird, ist es möglich na.rm= TRUE zu setzen. Dies ist müglich auf 
+Grund des '...' Arguments in der Funktion. Mit Hilfe dieser Einstellung künnen 
+NA-Werte aus dem x-Vektor entfernt und dadurch die gewünschte Berechnungen 
+durchgeführt werden.
+
+```{r}
+meanVarSdSe <- function(x,...){
+  mean <- mean(x, ...)
+  var <- var(x,...)
+  sd <- sd(x,...)
+  se <- sd / (length(x) - sum(is.na(x))) ^ 0.5
+  result <- c(mean = mean, var = var,sd = sd,se = se)
+  return (result)
+}
+meanVarSdSe(x, na.rm = TRUE)
+```
+
+###Part III
+
+Alternativ zur Funktion aus Part II kann man die NA Einträge innerhalb des x 
+Arguments mit Hilfe der bereits erstellten Funktion dropNa entfernen.Zuerst ist 
+das Vorgehen identisch zu Part II. Es wird ein Vektor meanVarSdSe erzeugt, dem 
+eine Funktion zugewiesen wird, mit Hilfe des function() Befehls. Das Argument 
+der Funktion bleibt weiterhin x. Was sich jedoch ändert ist die expresssion. Es
+wird die früher definierte Funktion hier benutzt, die alle NA's von x löscht.Man 
+kann auch innerhalb der Funktion meanVarSdSe()  die ganze dropNa definieren, aber für dieses Beispiel konzentrieren wir uns nur auf die richtige Ergebnisse.
+```{r}
+meanVarSdSe <- function(x){
+   x <- dropNa(x)
+  mean <- mean(x)
+  var <- var(x)
+  sd <- sd(x)
+  se <- sd/(length(x)^0.5)
+  result <- c(mean=mean, var=var,sd=sd,se=se)
+  return (result)
+}
+```
+
+Zu Testzwecken wird die neuerstellte Funktion auf einen x Vektor mit einem 
+NA-Eintrag und einer Zahlenfolge 1-100 angewendet. Man erhält die gewünschte 
+Lösung. Demnach ist die Funktion richtig definiert.
+
+```{r}
+x <- c(NA, 1:100)
+meanVarSdSe(c(x, NA))
+```
+
+##Functions III
+
+Es soll eine Infix Funktion für den logical operator | definiert werden. Diese 
+soll den Namen 'or' tragen. Infix Funktionen sind Funktionen die zwischen zwei 
+Argumenten stehen, wenn sie verwendet werden. Somit können Infix Funktionen als
+Operatoren angesehen werden. Damit eine Funktion als Infix Funktion angesehen 
+wird, wird die Funktion nicht einfach in einen Vektor gespeichert, sondern die 
+Bezeichung des neuen Vektors wird zwischen zwei '%' Zeichen stehen und von ""
+umschlossen sein. Aus diesem Grund wird "%or%" so geschrieben. Diesem Vektor 
+wird eine Funktion zugewiesen mit den Argumenten x und y, über den function() 
+Befehl. Die Funktion muss zwei Argumente haben, weil das Ziel ist zwei logische
+Werte oder Vektoren mit logischen Werten zu vergleichen und logische Werte 
+(TRUE/FALSE) als Output ausgibt. In die espression kommt eine verschachtelte 
+ifelse() Anweisung. Diese ist so zu lesen, dass zuerst geprüft wird, ob beide 
+Argumente TRUE entsprechen oder nicht, wichtig dabei ist das & Zeichen, was dazu
+führt das beide Bedingungen gleichzeitig gelten müssen. Liegt dieser Sachverhalt 
+vor soll die Funktion ein TRUE ausgeben,tritt dieser Sachverhalt nicht auf, soll
+in einer weiteren ifelse() Anweisung geprüft werden ob nicht gleichzeitg x=TRUE 
+und y=FALSE vorliegt. In diesem Fall soll wieder ein TRUE Wert ausgegeben werden. 
+Liegt keiner der beiden Fälle vor kommt die dritte ifelse() Anweisung zum Einsatz. 
+Diese entspricht im Prinzip Bedingung, die in der 2.ifelse() Anweisung geprüft
+wird, bloß in diesem Fall in umgekehrter Reihenfolge, sprich x=FALSE und y=TRUE.
+In diesem Fall sollte, wie bei der 2. ifelse() Anweisung, ein TRUE zurückgegeben
+werden. In allen anderen Fällen, die nicht durch eine der in den ifelse() 
+Anweisungen formulierten Bedingungen abgedeckt werden, sollte ein FALSE 
+zurückgegeben werden. Wie ist das Ganze zu verstehen? Die Funktion lässt sich 
+gut an dem vorliegenden Beispielvektoren aus dem Aufgabenblatt erklären, auf dem
+sie angewendet werden soll. Beide Vektoren könnten beispielsweise das Ergbenis
+einer Prüfung einer beliebigen Bedigung sein. Wenn eine Bedingung von einem
+Vektor erfüllt, wird ein TRUE Ausdruck zurückgegebn, falls nicht, wird
+ein FALSE Ausdruck zurückgegeben. Hat der Vektor mehrere Einträge, wird jeder 
+Eintrag seperat auf die Bedingung geprüft.Wenn nur von einem Vektor bzw. 
+Vektoreintrag die Bedingungen erfüllt sein soll, kann der neuerzeugte Operator 
+verwendet werden, um die zu prüfen. In diesem Fall geben alle TRUE Kombinationen
+TRUE aus, da in so einem Fall beide Bedingungen erfüllt sind, was im Falle einer 
+oder Bedingung legitim ist. Das gleiche gilt natürlich umgekerht für den 
+FALSE FALSE Fall, sprich wenn die Bedingung von keinen der beiden Vektoren bzw.
+Vektoreinträgen erfüllt ist und somit das Ergebniss der PrÃ¼fung der
+beiden Vektoren auf eine Bedingung zwei False Werte sind. Daher wird ein FALSE 
+zurückgegeben. Als letztes bleibt noch der Fall übrig, in dem einer der 
+beiden Vektoren bzw. VektoreintrÃ¤gen die Bedingung erfüllt, spricht TRUE FALSE
+bzw. FALSE TRUE. 
+An diesem Beispiel wird die %or% Funktion am deutlichsten, den es reicht, dass
+ein Vektor die Bedingung erfÃ¼llt und der andere nicht, deshalb wird ein TRUE 
+Ausdruck zurÃ¼ckgegeben.
+
+```{r}
+"%or%" <- function (x,y) ifelse((x == TRUE) & (y == TRUE), TRUE, ifelse(x == 
+                   TRUE & y == FALSE, TRUE, ifelse(x == FALSE & y == TRUE,TRUE, 
+                   FALSE)))
+
+c(TRUE, FALSE, TRUE, FALSE) %or% c(TRUE, TRUE, FALSE, FALSE)
+
+```
+
+# PART II Scoping and related topics:
+
+## Scoping  I 
+
+Zuerst einmal werden zwei Objekten definiert, x und y.
+Ihnen werden die Werte 5 und 7 zugewiesen. Die beiden Variablen befinden sich in
+der globaler Umgebung, was sich auch aus dem Workspace ablesen lässt. Neben 
+diesen beiden Variablen werden zwei Funktionen definiert, f und g.Dies geschieht
+über den function() Befehl. Funktion f hat keine Argumente, da innerhalb der () 
+nichts angegeben ist.Die expression ist ein Produkt von x und y. Führt man jetzt 
+die Funktion f aus ist drauf zu achten, dass keine Argumente direkt an die 
+Funktion übergeben werden können, da in der Funktion selbst keine festgelegt 
+worden sind. Aus diesem Grund bleibt f() leer. Würde man dennoch Zahlen 
+übergeben, beispielsweise f(5,7) würde die Console einen Fehler ausgeben lassen. 
+Nichtsdestotrotz ist der Output der Funktion ohne Argumente 35. Die Funktion 
+arbeitet einen Suchpfad ab, um die beiden benötigten Variablen x und y zu 
+finden. Dieses Vorgehen ist ein Teil des Lexical scoping. Als erstes wird
+geschaut, ob x und y mit spezifischen Werten innerhalb der Argumente der 
+Funktion festgelegt worden sind. Dies ist nich der Fall. Anschließend wird 
+geschaut, ob innerhalb der expresssion beide Variablen definiert worden sind. 
+Dies ist ebenfalls nicht der Fall. Zusammengefasst lässt sich sagen, dass in der
+lokaler Umgebung der Funktion nach diesen beiden variablen gesucht worden ist. 
+Da diese nicht gefunden wurden, wird nach ihnen in der globaler Umgebung 
+geschaut, wo sie mit x=5 und y=7 hinterlegt worden sind. Die globale Umgebung
+stellt das ,,parent'' der temporären enviroment der Funktion f() per default da.
+Der Suchpfad läuft immer so ab, dass zuerst in der lokalen enviorment der 
+Funktion nach Objekten geschaut wird und falls diese nicht gefunden werden in 
+ihrem parent also der global enviroment danach gesucht wird.
+
+```{r}
+
+x <- 5
+y <- 7
+f <- function() x * y 
+
+f() # call 1 
+```
+
+Funktion g() unterscheidet sich von Funktion f(). Das Argument der Funktion ist
+nicht mehr leer, wie es bei f() der Fall war, sondern legt 2 Werte für x und y 
+fest, nämlich x=2 und y=x. Die expression die danach folgt, ist die gleiche wie 
+bei f(). Der Suchpfad nach den beiden Variablen x und y, die zur Durchführung 
+der expression benötigt werden, ist der gleiche wie bei f(). Zuerst wird 
+innerhalb der lokalen Umgebung der Funktion nach den beiden Variablen gesucht.
+Die Funktion wird innerhalb der Argumente fundig. Zuerst wird das x gefunden. 
+Anschließend wird nach dem y geschaut. Da dieser Variable aber keine konkrete 
+Zahl zugeorndet ist, sondern eine x-Variable, beginnt die Funktion wieder 
+innerhalb der lokalen Umgebung der Funktion nach dieser x Variable zu suchen.
+Diese ist mit x=2 innerhalb der Argumente festgelegt. Die Variablen x=5 und y=7,
+die in der globalen Umgebung definiert worden sind werden nicht berücksichtigt. 
+
+```{r}
+g <- function(x = 2, y = x) x * y
+g() # call 2 :  
+```
+
+Im Unterschied zur Funktion f() können innerhalb der Funktion g() Argumente 
+eingetragen werden, ohne das es dabei zu einem Fehler kommt. In dem unten stehen
+Code wird die Funktion g ausgeführt wobei die Argumente auf y=x gesetzt werden. 
+Die Funktion läuft folgendermaßen ab. Da x schon innerhalb der Argument gleich 2
+gesetzt ist wird, findet die Funktion den Wert in ihrer lokalen Umgebung. Durch
+name matching wird das Argument y gleich x gesetzt. Da die Zuweisung von y zu x schon als Argument in der Funktion erfolgt, braucht man nicht mehr einzutragen. Nur wenn man den Wert von y anders als x will und zwar auf den von globaler Umgebung aufrufen will, kann man die Zuweisung nochmal definieren. Es ist einfacher als die x-Zuweisung in der g() Funktion zu ändern.
+
+
+```{r}
+
+g(y=x) # call 3
+```
+
+## Scoping  II
+
+In diesem code wird ein Objekt t erstellt, das eine Matrix darstellt. Die 
+Matrixerstellung wird durch den matrix() Befehl durchgeführt, wobei die Matrix
+aus den Zahlen 1-6 bestehen soll, 3 spalten haben soll und somit automatisch 
+zwei Zeilen. Die Spaltenanzahl wird durch ncol = 3 festgelegt, die Zeilenanzahl 
+ist bei 6 Einträgen automatisch mit 2 festgelegt. Durch byrow= TRUE Einstellung 
+wird definiert ob die Matrix nach Zeilen oder Spalten befällt werden soll, in 
+diesem Fall nach Zeilen. Das besondere ist hierbei, dass die bezeichnung t 
+bereits für eine Funktion reserviert ist, nämlich für das Transponieren von 
+Matrixen.Mit dem t(t) transponiert man die Matrix t (Transpose). In dem 
+vorliegenden Kontext geht klar hervor, das bei dem Ausdruck t(t) zuerst nach der
+Funktion transpose gesucht wird und nicht nach der Variable t. Nach dem die 
+Funktion gefunden worden ist wird nach der variable t gesucht. Durch das 
+generieren das Objekt t wird nicht die transpose t() Funktion überschrieben. 
+Denn beide befinden sich in unterschiedlichen Umgebungen. Innerhalb einer 
+Umgebung kann nur einmal eine Bezeichnung vergeben werden. Die Variable t 
+befindet sich in globaler Umgebung. Für die Funktion t() wird beim Aufruf der 
+Funktion eine neue Umgebung erzeugt. In dieser Umgebung wird nach der 
+Matrix t gesucht.Â´Da dieser aber in globaler Umgebung hinterlegt ist, wird sie 
+nicht gefunden. Daher wird im nächsten Schritt in der globaler Umgebung danach 
+gesucht. Nachdem sie gefunden worden ist, wird sie mit der t() Funktion 
+transponiert.
+
+
+```{r}
+t <- matrix(1:6, ncol = 3, byrow = TRUE)
+t
+t(t)
+
+```
+
+##Scoping III
+
+Die Frage die es zu klären gilt: Warum unterscheiden sich die Resultate von t(T)
+und t(t). Dazu werden zuerst beide Funktionen in ihrer FUnktionsweise seperat 
+erläutert. Dem Ausdruck t wird eine Funktion mit Hilfe des function() Befehls 
+zugeorndet. Das Argument ist '...' ,was bedeutet, dass belibige Argumente, die 
+nicht explizit im Argumentenbereich festgehalten werden an eine Funktion 
+innerhalb der neudefinierten Funktion t() weiter gegeben werden können. In 
+unserem Fall ist es die matrix() Funktion. Um dieses Vorgehen sicherzuestellen 
+muss innerhalb der Funktion ebenfalls das '...' Argument angegeben werden. Da der
+Ausdruck t()  bereits für die transpose Funktion reseviert ist, könnte vermutet
+werden, dass die transpose Funktion durch die neudefinierte Funktion temporär
+überschrieben wird. Dies ist nicht der Fall. Wenn  zwei Funktionen mit dem 
+selben Namen gefunden werden können nutzt R die Funktion, die im Workspace 
+hinterlegt ist. Die tranpose Funktion wird nicht überschrieben, sie wird blos 
+durch die Funktion im workspace verdeckt/getarnt. Bezogen auf dem vorliegenden 
+Fall, wird ein neuer Vektor T definiert, der den Output der definierten Funktion 
+t() beinhaltet. Durch das ... Argument können Argumente in der neudefinierte t() 
+Funktion an die matrix() Funktion weitergeleitet werden, ohne sie explizit zu 
+definieren. Aus diesem Grund können Einstellungen zur Matrix vorgenommen werden,
+wie die Spaltenanzahl durch ncol, die 3 beträgt oder die Anordnung der
+Datensatzes durch byrow, die TRUE ist, was beduetet das die Zahlenfolge entlag 
+der Zeilen angeorndet werden soll.In unserem Fall ist der Datensatz eine 
+Zahlenfolge von 1-6.Nachdem nun im Vektor T eine 2x3 Matrix abgespeichert 
+worden ist, wird auf ihn  wieder die t() Funktion angwendet. Auch dieses mal 
+wird nicht die tranpose Funktion verwendet, sondern die von uns neudefinierte 
+Funktion. Sprich auf eine 2x3 Matrix wird nochmal die matrix Funktion angwendet,
+wodruch die Matrix zu einer 6x1 Matrix wird.
+
+```{r}
+t <- function(...) matrix(...)
+T <- t(1:6, ncol = 3, byrow = TRUE)
+T
+t(T)
+
+```
+
+In diesem Fall wird die gleiche Funktion t definiert wie zuvor.Anschließend wird
+ein neues Objekt t erzeugt, der den Output aus dieser Funktion festhalten soll 
+für eine Zahlenfolge 1-6 mit ncol= 3. Es ergibt sich somit eine 2x3 Matrix.Wenn 
+man diesen Befehl ausführt verschwindet die vorher definierte FUnktion t, die 
+einfach nur eine Matrix abbilden soll.Dementsprechend ist in globaler Umgebung
+keine Funktion mehr für den Ausdruck t vorhanden, sondern eine Matrix t. Somit 
+fällt das Prinzip von name masking weg und mit dem Ausdruck t wird wieder die 
+transpose Funktion angresprochen.Aus diesem Grund wird dir 2x3 Matrix in t zu 
+einer 3x2 Matrix. Aus dem Kontext geht hervor das R nach einer Funktion suchen 
+soll , auf Grund der () nach t und nicht nach der Matrix t. Deshalb wird die 
+tranpose FUnktion gefunden und angewendet. Gleichzeitg befinden sich die Matrix 
+t und die tranpose FUnktion t() in verschiedenen Umgebungs. Aus diesem Grund 
+funktioniert dieser Befehl.
+
+
+```{r}
+t <- function(...) matrix(...)
+
+t <- t(1:6, ncol = 3, byrow = TRUE) 
+
+t(t)
+
+```
+
+##Dynamic Lookup
+
+Erste Linie löscht komplett globale Umgebung, das funktioniert genauso wie 
+rm(list = ls()). Funktion rm() dient dazu, um die Objekten von bestimmter Ugebung 
+zu löschen. Als Argument  wurde 'list' als Funktion ls() gegeben, die ein Vektor 
+von Namen der Objekten von bestimmter Umgebung ausgibt.In der Funktion ls() 
+definiert man den Wert für das Argument 'all.names'. Wenn TRUE eingegeben, 
+dann alle Objektnamen ausgegeben werden. Deswegen wie schon geschrieben wurde, 
+werden alle Objektnamen von globaler Umgebung gelöscht.
+```{r}
+rm(list = ls(all.names = TRUE)) # gleich zu rm(list=ls())
+
+```
+
+Es wird eine Funktion f() mit Hilfe des function() Befehls erzeugt. Die Funktion 
+hat zwei Argumente. Das erste Argument ist x, das zweite Argument ist y, wobei 
+dieses sich aus der Summe von x und 1 zusammensetzt. Die expression, sprich der 
+Output den die Funktion f() erzeugen soll, ist eine Summe aus den beiden 
+Argumenten x und y. Wir definieren einen x Vektor, der die Zahl 3 beinhaltet. 
+Die wird Funktion f() ausgeführt. Dabei wird
+ihr die Zahl 2 als Input übergeben. Es stellt sich die Frage, welchen Wert das
+x Argument der Funktion annimmt, 3 oder 2? Für das x Argument wird der Wert 2 
+genommen und nicht 3(als Argument in der Funktion gegeben wurde). Daraus ergibt 
+sich, dass y den Wert 3 annehmen muss und der Output der Funkion 5 ist, da x+y=2+3=5 ist. Die geschrieben Funktion erfüllt
+die Eigenschaft des self containment.Das bedeutet,dass der Outputwert der 
+Funktion nur von den Inputwerten der Funktion abhängt, also den Argumenten
+innerhalb der lokalen Umgebung der Funktion.Dementsprechend wird der
+vordefinierter x Vektor auf Grund seiner Lage in der globalen Umgebung nicht 
+von der Funktion aufgerufen.Nachdem durch den Input 2 das x Argument der 
+Funktion feststeht sucht die Funktion nach einem y Argument. Dieses hängt durch 
+den Ausdruck y=x+1 vom x Argument der Funktion innerhalb der local Umgebung
+der Funktion ab. Da x bereits in der lokalen Umgebung  der Funktion  durch den
+Inputwert 2 definiert ist zieht sich die Funktion diesen Wert und erhält für y,
+gemäß der Formel y=x+1, den Wert 3. 
+
+
+```{r}
+f <- function(x, y = x + 1) x + y
+x <- 3
+f(2) 
+```
+
+Nun wird der Wert des x Vektors auf 5 gesetzt und die Funktion f() mit dem 
+selben Inputwert 2 ausgeführt. Wie man erkennen kann bleibt das Ergebnis
+unverändert,nämlich 5.Der Grund dafür ist, wie schon oben erwähnt, die self 
+containment Eigenschaft der Funktion. R muss nicht nach dem x Vektor in der 
+global Umgebung suchen,da wir die 2 als Input für das x Argument in die
+Funktion gegeben haben. Somit findet die Funktion einen Wert für das Argument x,
+innerhalb ihrer local Umgebung, der 2 entspricht. Aus diesem Grund ist es 
+egal welchen Wert wir innerhalb der global Umgebung für den Vektor x 
+festlegen. So lange ein Inputwert an die Funktion für das x Argument übergeben 
+wird, kommt es immer zu einem Output. Würde kein Wert für x Argument an die 
+Funktion übergeben werden und kein x in der globalen Umgebung definiert, würde es
+in einem Fehleroutput führen. Dieser zeigt an, dass das x Argument nicht gefunden 
+werden kann. Argument x ist obligatorisch, deswegen ohne Angabe von x in der 
+Funktion eine Fehlermeldung auftaucht. Ganz anders ist mit dem Argument y, das 
+schon fest angegeben wurde und kann auch beliebig modifiziert werden, indem man 
+schreibt 'f(y=x-3)'- als x wird jetzt den Wert von globaler Umgebung und nicht von der Funktion genommen.
+
+
+```{r}
+x <- 5
+f(2)
+f()
+```
+Nun wird wieder eine Funktion im Vektor f abgelegt. Dieses mal wird jedoch nur 
+ein Argument festgelegt, nämlich y. Dieses setzt sich aus der Summe von x und 1
+zusammen. Ein x Argument wird nicht explizit festgelegt, noch erwähnt. Der 
+Output der Funktion soll eine Summe aus den Vektoren x und y sein. Die Frage die
+sich hier stellt ist welchen Wert nimmt x bzw. y an , wenn vor dem Ausführen der
+Funktion innerhalb der global Umgebung ein Vektor x definiert wird, der den 
+Wert 3 annimmt? Der Output der Funktion ist 5. Das bedeutet, dass der Vektor x
+in der globalen Umgebung verwendet wird. Durch das übergeben des Wertes 2 wird
+durch positional Matching der Wert dem Argument y zugeiwesen. Somit wird der
+Ausdruck für y innerhalb der local Umgebung der Funktion gefunden. Somit muss
+das y Argument nicht mehr per angegebener Formel in der Funktion berechnet 
+werden. Nachdem das y Argument gefunden worden ist wird zur Durchführung der
+expression ein x Vektor benötigt. Da innerhalb der local Umgebung kein 
+x Vektor zu finden ist, wird in der global Umgebung danach gesucht. Die
+Funktion findet den x-Vektor innerhalb der global Umgebung und gibt somit den
+Output x+y= 5 aus. In dem vorliegenden Fall erfüllt die Funktion nicht die self
+containing Eigenschaft, da sie abhängig vom Vektor x in der global Umgebung 
+ist. Der Output ändert sich jedes mal, wenn sich der x Vektor ändert, auch wenn 
+das an die Funktion f() übergeben y Argument dauerhaft bei 2 festgelegt bleiben 
+würde. Denn R sucht nur nach Objekten wenn eine Funktion läuft, nicht wenn eine 
+Funktion definiert wird.Aus diesem Grund hängt der Output in dem vorliegenden 
+Fall von den Objekten ab die in dem Umgebung definiert sind, in dem die 
+Funktion definiert und läuft ab, nÃ¤mlich der global Umgebung. Dieser Fall 
+gilt so lange x nicht in die Argumente der Funktion aufgenommen wird.
+
+```{r}
+f <- function(y = x + 1) x + y
+x <- 3
+f(2) # call 3
+```
+Im vorliegenden Fall wird statt x=3 , x=5 gesetzt und die Funktion f() 
+ausgeführt. Der Output der Funktion ist  7. Daran erkennt man, dass die Funktion 
+nicht gut definiert worden ist. Würde der x Vektor an einer anderen Stelle im 
+Code stehen würde man trotz Funktiondefinition nicht den Output nachvolziehen 
+künnen, was schon im Call 2 der Fall war.Die self containing Eigenschaft der 
+Funktion ist weiterhin verletzt. Wir übergeben die 2 als Input für das y 
+Argument. Anschließend wird für das Durchführen der Funktion ein x Vektor 
+benötigt. Da innerhalb der Argumente kein x Vektor gegebenist findet die 
+Funktion keinen x Vektor innerhalb der local Umgebung und sucht nach ihm in 
+der global Umgebung, wo x=5 definiert ist. Aus y=2 und x=5 ergibt sich auf 
+Grund der expression y+x ein Output von 7.
+
+```{r}
+x <- 5
+f(2) # call 4
+```
+
+Nun liegt die Situation vor, dass innerhalb der globalen Umgebung immer noch 
+x=5 definiert ist, an die Funktion aber kein Argument übergeben wird. In diesem
+Fall greift die Funktion auf die Definition von y innerhalb der local 
+Umgebung der Funktion zurück, nämlich  y=x+1. Das kein x innerhalb der 
+lokalen Umgebung definiert ist wird auf das x innerhalb der globalen Umgebung 
+zurückgegrgiffen was 5 ist. Aus y=5+1 und x=5 ergibt sich für y+x=11.
+Im Gegensatz zum Call 1 und Call 2 kommt es hier zu keinem Fehlerouput, weil jetzt y ist ein obligatorisch Argument mit schon gegebenem Wert,nämlich y=x+1 und x schon früher in der globalen Umgebung definiert wurde.Die Fehlermeldung kann nun auftauchen, wenn es keinen x in der globalen Umgebung.
+
+```{r}
+f() # call 5
+```
+
+
+
+
